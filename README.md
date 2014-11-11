@@ -32,4 +32,4 @@ library(devtools)
 install_github("mrdwab/splitstackshape", ref = "devel")
 ```
 
-Current version: 1.4.2
+Current devel version: 1.4.3
