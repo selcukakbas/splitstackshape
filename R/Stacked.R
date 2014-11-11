@@ -110,8 +110,8 @@ Stacked <- function(data, id.vars = NULL, var.stubs, sep,
     } 
   }
 
-  if (length(ZZ) == 1) ZZ[[1]]
-  else ZZ
+  if (length(ZZ) == 1) ZZ[[1]][]
+  else ZZ[]
 }
 NULL
 

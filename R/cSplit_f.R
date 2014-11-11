@@ -73,7 +73,7 @@ cSplit_f <- function(indt, splitCols, sep, drop = TRUE, dotsub = "|", stripWhite
     split_names <- paste(splitCols[i], seq_along(Split), sep = "_")
     set(indt, i = NULL, j = split_names, value = Split)
   }
-  if (isTRUE(drop)) set(indt, i = NULL, j = splitCols, value = NULL)
-  indt
+  if (isTRUE(drop)) set(indt, i = NULL, j = splitCols, value = NULL)[]
+  indt[]
 }
 NULL

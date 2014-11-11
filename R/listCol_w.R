@@ -27,7 +27,7 @@ listCol_w <- function(inDT, listcol, drop = TRUE, fill = NA_character_) {
   M[cbind(rep(sequence(nrow(inDT)), reps), sequence(reps))] <- unlist(
     inDT[[listcol]], use.names = FALSE)
   if (isTRUE(drop)) {
-    inDT[, (LC) := NULL]
+    inDT[, (LC) := NULL][]
   }
   cbind(inDT, M)
 }

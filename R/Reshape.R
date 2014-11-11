@@ -89,8 +89,7 @@ Reshape <- function(data, id.vars = NULL, var.stubs, sep = ".", rm.rownames = TR
           varying = lapply(vGrep(var.stubs, names(out), value = TRUE), sort), 
           sep = sep, v.names = var.stubs)
   if (isTRUE(rm.rownames)) {
-    rownames(out) <- NULL
-    out
+    `rownames<-`(out, NULL)
   } else {
     out
   }

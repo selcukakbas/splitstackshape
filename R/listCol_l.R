@@ -27,7 +27,7 @@ listCol_l <- function(inDT, listcol, drop = TRUE) {
   temp[, ".renameme" := unlist(inDT[[listcol]], use.names = FALSE)]
   setnames(temp, ".renameme", paste0(LC, "_ul"))
   if (isTRUE(drop)) {
-    temp[, (LC) := NULL]
+    temp[, (LC) := NULL][]
   }
   temp
 }
