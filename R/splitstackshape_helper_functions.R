@@ -279,3 +279,18 @@ NULL
   sprintf(paste0("%0", nchars, "d"), invec)
 }
 NULL
+
+Trim <- function(invec) {
+  `dim<-`(stri_trim_both(invec), dim(invec))
+}
+NULL
+
+padNAcols <- function(inmat, colsneeded) {
+  colsNeeded <- colsneeded - ncol(inmat)
+  if (colsNeeded == 0) {
+    inmat
+  } else {
+    cbind(inmat, matrix(NA, nrow = nrow(inmat), ncol = colsNeeded))
+  } 
+}
+NULL
