@@ -32,4 +32,12 @@ library(devtools)
 install_github("mrdwab/splitstackshape", ref = "devel")
 ```
 
+To install the version that uses "stringi" (>= version 0.3.1), use:
+
+```r
+library(devtools)
+install_github("mrdwab/splitstackshape", ref = "stringi")
+```
+
 Current devel version: 1.4.3
+Current stringi version: 1.5.1

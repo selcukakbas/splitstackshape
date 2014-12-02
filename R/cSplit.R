@@ -21,9 +21,10 @@
 #' the concatenated columns, should it be stripped prior to splitting? Defaults
 #' to \code{TRUE}.
 #' @param makeEqual Logical. Should all groups be made to be the same length?
-#' Defaults to \code{FALSE}.
+#' Defaults to \code{TRUE}.
 #' @param type.convert Logical. Should \code{\link{type.convert}} be used to convert
-#' the result of each column? This would add a little to the execution time.
+#' the result of each column? This would add a little to the execution time. 
+#' Defaults to \code{TRUE}.
 #' @return A \code{\link[data.table:data.table]{data.table}} with the values
 #' split into new columns or rows.
 #' @note The \code{cSplit} function replaces most of the earlier
@@ -50,27 +51,26 @@
 #' ## Split "Siblings" into a long form...
 #' cSplit(temp, "Siblings", ",", direction = "long")
 #' 
-#' ## Split "Siblings" into a long form, removing extra whitespace
-#' cSplit(temp, "Siblings", ",", direction = "long", stripWhite = TRUE)
-#' 
 #' ## Split a vector
 #' y <- c("a_b_c", "a_b", "c_a_b")
 #' cSplit(as.data.table(y), "y", "_")
 #' 
 #' @export cSplit
 cSplit <- function(indt, splitCols, sep = ",", direction = "wide", 
-                   fixed = TRUE, drop = TRUE, 
-                   stripWhite = TRUE, makeEqual = NULL, 
-                   type.convert = TRUE) {
+                   fixed = TRUE, drop = TRUE, stripWhite = TRUE, 
+                   type.convert = TRUE, makeEqual = TRUE) {
   
-  if (!is.data.table(indt)) indt <- as.data.table(indt)
+  if (!is.data.table(indt)) 
+    indt <- as.data.table(indt)
   else indt <- copy(indt)
-
-  if (is.numeric(splitCols)) splitCols <- names(indt)[splitCols]
-  if (any(!vapply(indt[, splitCols, with = FALSE],
-                  is.character, logical(1L)))) {
-    indt[, eval(splitCols) := lapply(.SD, as.character),
-         .SDcols = splitCols]
+  if (is.numeric(splitCols)) 
+    splitCols <- Names(indt, splitCols)
+  
+  if (direction == "long" & length(splitCols) > 1) {
+    if (!isTRUE(makeEqual)) {
+      message("makeEqual specified as FALSE but set to TRUE")
+      makeEqual <- TRUE
+    }
   }
   
   if (length(sep) == 1) 
@@ -78,83 +78,40 @@ cSplit <- function(indt, splitCols, sep = ",", direction = "wide",
   if (length(sep) != length(splitCols)) {
     stop("Verify you have entered the correct number of sep")
   }
-
-  if (isTRUE(stripWhite)) {
-    indt[, eval(splitCols) := mapply(function(x, y) 
-      .stripWhite(x, y), 
-      indt[, splitCols, with = FALSE], sep,
-      SIMPLIFY = FALSE)]
-  }  
   
-  X <- lapply(seq_along(splitCols), function(x) {
-    strsplit(indt[[splitCols[x]]], split = sep[x], fixed = fixed)
-  })
-  
-  if (direction == "long") {
-    if (is.null(makeEqual)) {
-      IV <- function(x,y) if (identical(x,y)) TRUE else FALSE
-      makeEqual <- ifelse(Reduce(IV, rapply(X, length, how = "list")),
-                          FALSE, TRUE)
-    }
-  } else if (direction == "wide") {
-    if (!is.null(makeEqual)) {
-      if (!isTRUE(makeEqual)) {
-        message("makeEqual specified as FALSE but set to TRUE")
-        makeEqual <- TRUE
-      }
-      makeEqual <- TRUE
-    } else {
-      makeEqual <- TRUE
-    }
-  }
-  if (isTRUE(makeEqual)) {
-    SetUp <- lapply(seq_along(X), function(y) {
-      A <- vapply(X[[y]], length, 1L)
-      list(Mat = cbind(rep(seq_along(A), A), sequence(A)),
-           Val = unlist(X[[y]]))
-    })    
-    Ncol <- max(unlist(lapply(SetUp, function(y) y[["Mat"]][, 2]), 
-                       use.names = FALSE))
-    X <- lapply(seq_along(SetUp), function(y) {
-      M <- matrix(NA_character_, nrow = nrow(indt), ncol = Ncol)
-      M[SetUp[[y]][["Mat"]]] <- SetUp[[y]][["Val"]]
-      M
+  switch(
+    direction,
+    wide = {
+      X <- lapply(seq_along(splitCols), function(x) {
+        temp1 <- stri_split_fixed(indt[[splitCols[x]]], sep[x], 
+                                  simplify = TRUE, omit_empty = TRUE)
+        if (isTRUE(stripWhite)) temp1 <- Trim(temp1)
+        temp1 <- as.data.table(temp1)
+        setnames(temp1, paste(splitCols[x], .pad(
+          sequence(ncol(temp1))), sep = "_"))
+        if (isTRUE(type.convert)) temp1 <- temp1[, lapply(.SD, type.convert)]
+        temp1
+      })
+      out <- cbind(indt, do.call(cbind, X))
+      if (isTRUE(drop)) out[, (splitCols) := NULL][]
+    },
+    long = {
+      Y <- lapply(seq_along(splitCols), function(x) {
+        temp1 <- stri_split_fixed(indt[[splitCols[x]]], sep[x],
+                                  simplify = TRUE, omit_empty = TRUE)
+      })
+      Ncols <- max(vapply(Y, ncol, 1L))
+      Y <- lapply(Y, function(x) {
+        out <- c(t(padNAcols(x, Ncols)))
+        if (isTRUE(stripWhite)) out <- stri_trim_both(out)
+        out
+      })
+      YDT <- as.data.table(Y)
+      setnames(YDT, paste0(splitCols, "_new"))
+      if (isTRUE(type.convert)) YDT <- YDT[, lapply(.SD, type.convert)]
+      out <- cbind(expandRows(indt, Ncols, count.is.col = FALSE), YDT)
+      if (!isTRUE(makeEqual)) out <- na.omit(out, by = paste0(splitCols, "_new"))
+      if (isTRUE(drop)) out[, (splitCols) := NULL][]
     })
-    if (direction == "wide") {
-      X <- lapply(seq_along(X), function(x) {
-        colnames(X[[x]]) <- paste(splitCols[x], 
-                                  .pad(sequence(ncol(X[[x]]))), 
-                                  sep = "_")
-        X[[x]]
-      })
-      
-      if (isTRUE(type.convert)) {
-        X <- lapply(seq_along(X), function(x) {
-          as.data.table(X[[x]])[, lapply(.SD, type.convert)]
-        })
-      }
-      
-      if (isTRUE(drop)) {
-        cbind(indt, do.call(cbind, X))[, eval(splitCols) := NULL][]
-      } else {
-        cbind(indt, do.call(cbind, X))
-      }
-      
-    } else {
-      indt <- indt[rep(sequence(nrow(indt)), each = Ncol)]
-      X <- lapply(X, function(y) {
-        if (isTRUE(type.convert)) type.convert(as.vector(t(y)))
-        else as.vector(t(y))
-      })
-      indt[, eval(splitCols) := lapply(X, unlist, use.names = FALSE)][]
-    }  
-  } else {
-    Rep <- vapply(X[[1]], length, integer(1L))
-    indt <- indt[rep(sequence(nrow(indt)), Rep)]
-    indt[, eval(splitCols) := lapply(X, function(x) {
-      if (isTRUE(type.convert)) type.convert(unlist(x, use.names = FALSE))
-      else unlist(x, use.names = FALSE)
-    })][]
-  }
 }
 NULL

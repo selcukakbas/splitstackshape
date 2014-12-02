@@ -4,7 +4,7 @@
 \title{Split Concatenated Values into Separate Values}
 \usage{
 cSplit(indt, splitCols, sep = ",", direction = "wide", fixed = TRUE,
-  drop = TRUE, stripWhite = TRUE, makeEqual = NULL, type.convert = TRUE)
+  drop = TRUE, stripWhite = TRUE, type.convert = TRUE, makeEqual = TRUE)
 }
 \arguments{
 \item{indt}{The input \code{data.frame} or \code{data.table}.}
@@ -30,11 +30,12 @@ Defaults to \code{TRUE}.}
 the concatenated columns, should it be stripped prior to splitting? Defaults
 to \code{TRUE}.}
 
-\item{makeEqual}{Logical. Should all groups be made to be the same length?
-Defaults to \code{FALSE}.}
-
 \item{type.convert}{Logical. Should \code{\link{type.convert}} be used to convert
-the result of each column? This would add a little to the execution time.}
+the result of each column? This would add a little to the execution time.
+Defaults to \code{TRUE}.}
+
+\item{makeEqual}{Logical. Should all groups be made to be the same length?
+Defaults to \code{TRUE}.}
 }
 \value{
 A \code{\link[data.table:data.table]{data.table}} with the values
@@ -65,9 +66,6 @@ cSplit(temp, c("Likes", "Hates"), c(",", ";"))
 
 ## Split "Siblings" into a long form...
 cSplit(temp, "Siblings", ",", direction = "long")
-
-## Split "Siblings" into a long form, removing extra whitespace
-cSplit(temp, "Siblings", ",", direction = "long", stripWhite = TRUE)
 
 ## Split a vector
 y <- c("a_b_c", "a_b", "c_a_b")
