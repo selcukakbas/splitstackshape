@@ -77,14 +77,19 @@ cSplit <- function(indt, splitCols, sep = ",", direction = "wide",
     sep <- rep(sep, length(splitCols))
   if (length(sep) != length(splitCols)) {
     stop("Verify you have entered the correct number of sep")
-  }
+  } 
   
   switch(
     direction,
     wide = {
       X <- lapply(seq_along(splitCols), function(x) {
-        temp1 <- stri_split_fixed(indt[[splitCols[x]]], sep[x], 
-                                  simplify = TRUE, omit_empty = TRUE)
+        if (!isTRUE(fixed)) {
+          temp1 <- stri_split_regex(indt[[splitCols[x]]], sep[x], 
+                                    simplify = TRUE, omit_empty = TRUE)
+        } else {
+          temp1 <- stri_split_fixed(indt[[splitCols[x]]], sep[x], 
+                                    simplify = TRUE, omit_empty = TRUE)
+        }
         if (isTRUE(stripWhite)) temp1 <- Trim(temp1)
         temp1 <- as.data.table(temp1)
         setnames(temp1, paste(splitCols[x], .pad(
@@ -97,8 +102,13 @@ cSplit <- function(indt, splitCols, sep = ",", direction = "wide",
     },
     long = {
       Y <- lapply(seq_along(splitCols), function(x) {
-        temp1 <- stri_split_fixed(indt[[splitCols[x]]], sep[x],
-                                  simplify = TRUE, omit_empty = TRUE)
+        if (!isTRUE(fixed)) {
+          temp1 <- stri_split_regex(indt[[splitCols[x]]], sep[x],
+                                    simplify = TRUE, omit_empty = TRUE)
+        } else {
+          temp1 <- stri_split_fixed(indt[[splitCols[x]]], sep[x],
+                                    simplify = TRUE, omit_empty = TRUE)
+        }
       })
       Ncols <- max(vapply(Y, ncol, 1L))
       Y <- lapply(Y, function(x) {

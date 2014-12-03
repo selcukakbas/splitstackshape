@@ -40,4 +40,4 @@ install_github("mrdwab/splitstackshape", ref = "stringi")
 ```
 
 Current devel version: 1.4.3
-Current stringi version: 1.5.1
+Current stringi version: 1.5.2
