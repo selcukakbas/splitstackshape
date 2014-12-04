@@ -17,8 +17,9 @@ position).}
 expression.}
 
 \item{mode}{Can be either \code{"binary"} (where presence of a number in a
-given column is converted to "1") or \code{"value"} (where the value is
-retained and not recoded to "1"). Defaults to \code{"binary"}.}
+given column is converted to "1"), \code{"value"} (where the value is
+retained and not recoded to "1"), or \code{"count"} (where the values are
+tabulated). Defaults to \code{"binary"}.}
 
 \item{type}{Can be either \code{"numeric"} (where the items being split are
 integers) or \code{"character"} (where the items being split are character
@@ -37,20 +38,32 @@ A \code{data.frame} or a \code{data.table} depending on the source input.
 }
 \description{
 "Expand" concatenated numeric or character values to their relevant position
-in a \code{data.frame} or \code{data.table} or create a binary representation of such data.
+in a \code{data.frame} or \code{data.table} or create a binary or count
+representation of such data.
 }
 \examples{
 temp <- head(concat.test)
 cSplit_e(temp, "Likes")
 cSplit_e(temp, 4, ";", fill = 0)
 
+mydf <- data.frame(v1 = 1:4, v2 = c("1,1,2,2,1,3,4",
+   "1,2,3,4,6", "1,3", "1,6,6,4,2"))
+
+cSplit_e(mydf, "v2", mode = "count")
+
+## Slightly different result when using type = "character"
+## Notice that there is no "v2_5"
+cSplit_e(mydf, "v2", mode = "count", type = "character")
+
+cSplit_e(mydf, "v2", mode = "binary")
+cSplit_e(mydf, "v2", mode = "value")
+
+
 ## The old function name still works
 concat.split.expanded(temp, "Likes")
 concat.split.expanded(temp, 4, ";", fill = 0)
 concat.split.expanded(temp, 4, ";", mode = "value", drop = TRUE)
 concat.split.expanded(temp, "Siblings", type = "character", drop = TRUE)
-
-\dontshow{rm(temp)}
 }
 \author{
 Ananda Mahto

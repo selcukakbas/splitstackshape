@@ -12,10 +12,11 @@
 #' @examples
 #' 
 #' mydf <- data.frame(a = 1:2, b = 3:4, c = 5:6)
-#' splitstackshape:::othernames(mydf, "a")
+#' othernames(mydf, "a")
 #' 
 #' \dontshow{rm(mydf)}
 #' 
+#' @export othernames
 othernames <- function(data, toremove) {
   setdiff(names(data), Names(data, toremove))
 }
@@ -36,18 +37,17 @@ NULL
 #' @examples
 #' 
 #' mydf <- data.frame(a = 1:2, b = 3:4, c = 5:6)
-#' splitstackshape:::Names(mydf, c("a", "c"))
-#' splitstackshape:::Names(mydf, c(1, 3))
+#' Names(mydf, c("a", "c"))
+#' Names(mydf, c(1, 3))
 #' 
 #' \dontshow{rm(mydf)}
 #' 
+#' @export Names
 Names <- function(data, invec) {
   if (!is.numeric(invec)) invec <- match(invec, names(data))
   names(data)[invec]
 }
 NULL
-
-
 
 #' Read Concatenated Character Vectors Into a data.frame
 #' 
@@ -91,8 +91,6 @@ read.concat <- function(data, col.prefix, sep, ...) {
 }
 NULL
 
-
-
 #' Create a Numeric Matrix from a List of Values
 #' 
 #' Create a numeric matrix from a list of values
@@ -104,8 +102,8 @@ NULL
 #' @param listOfValues A \code{list} of input values to be inserted in a
 #' matrix.
 #' @param fill The initializing fill value for the empty matrix.
-#' @param mode Either \code{"binary"} or \code{"value"}. Defaults to
-#' \code{"binary"}.
+#' @param mode Either \code{"binary"}, \code{"value"}, or \code{"count"}. 
+#' Defaults to \code{"binary"}.
 #' @return A \code{matrix}.
 #' @author Ananda Mahto
 #' @seealso \code{strsplit}, \code{\link{charMat}}
@@ -125,16 +123,23 @@ numMat <- function(listOfValues, fill = NA, mode = "binary") {
   len  <- length(listOfValues)
   vec  <- unlist(listOfValues, use.names = FALSE)
   slvl <- seq(min(vec), max(vec))
-  out  <- matrix(fill, nrow = len, ncol = length(slvl), dimnames = list(NULL, slvl))
   i.idx <- rep(seq_len(len), vapply(listOfValues, length, integer(1L)))
   j.idx <- match(vec, slvl)
-  out[cbind(i.idx, j.idx)] <- switch(mode, binary = 1L, value = vec, 
-                                     stop("'mode' must be 'binary' or 'value'"))
+  
+  if (!mode %in% c("binary", "value", "count")) {
+    stop("'mode' must be 'count', 'binary', or 'value'")
+  }
+  
+  if (mode %in% c("binary", "value")) {
+    out  <- matrix(fill, nrow = len, ncol = length(slvl), 
+                   dimnames = list(NULL, slvl))
+    out[cbind(i.idx, j.idx)] <- switch(mode, binary = 1L, value = vec)
+  } else {
+    out <- unclass(table(i.idx, factor(vec, slvl), dnn = NULL))
+  }
   out
 }
 NULL
-
-
 
 #' Create a Binary Matrix from a List of Character Values
 #' 
@@ -147,8 +152,8 @@ NULL
 #' @param listOfValues A \code{list} of input values to be inserted in a
 #' matrix.
 #' @param fill The initializing fill value for the empty matrix.
-#' @param mode Either \code{"binary"} or \code{"value"}. Defaults to
-#' \code{"binary"}.
+#' @param mode Either \code{"binary"}, \code{"value"}, or \code{"count"}. 
+#' Defaults to \code{"binary"}.
 #' @return A \code{matrix}.
 #' @author Ananda Mahto
 #' @seealso \code{strsplit}, \code{\link{numMat}}
@@ -166,17 +171,23 @@ charMat <- function(listOfValues, fill = NA, mode = "binary") {
   len   <- length(listOfValues)
   vec   <- unlist(listOfValues, use.names = FALSE)
   lvl   <- sort(unique(vec))
-  out   <- matrix(fill, nrow = len, ncol = length(lvl), 
-                  dimnames = list(NULL, lvl))
   i.idx <- rep(seq.int(len), vapply(listOfValues, length, integer(1L)))
   j.idx <- match(vec, lvl)
-  out[cbind(i.idx, j.idx)] <- switch(mode, binary = 1L, value = vec, 
-                                     stop("'mode' must be 'binary' or 'value'"))
+  
+  if (!mode %in% c("binary", "value", "count")) {
+    stop("'mode' must be 'count', 'binary', or 'value'")
+  }
+  
+  if (mode %in% c("binary", "value")) {
+    out  <- matrix(fill, nrow = len, ncol = length(lvl), 
+                   dimnames = list(NULL, lvl))
+    out[cbind(i.idx, j.idx)] <- switch(mode, binary = 1L, value = vec)
+  } else {
+    out <- unclass(table(i.idx, vec, dnn = NULL))
+  }
   out
 }
 NULL
-
-
 
 #' Split Basic Alphanumeric Strings Which Have No Separators
 #' 

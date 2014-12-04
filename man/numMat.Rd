@@ -11,8 +11,8 @@ matrix.}
 
 \item{fill}{The initializing fill value for the empty matrix.}
 
-\item{mode}{Either \code{"binary"} or \code{"value"}. Defaults to
-\code{"binary"}.}
+\item{mode}{Either \code{"binary"}, \code{"value"}, or \code{"count"}.
+Defaults to \code{"binary"}.}
 }
 \value{
 A \code{matrix}.
