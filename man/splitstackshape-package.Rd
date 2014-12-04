@@ -9,7 +9,7 @@ Stack and Reshape Datasets After Splitting Concatenated Values
 }
 \details{
 \tabular{ll}{ Package: \tab splitstackshape\cr Type: \tab Package\cr
-Version: \tab 1.5.2\cr Date: \tab 2014-12-03\cr License: \tab GPL-3\cr }
+Version: \tab 1.5.3\cr Date: \tab 2014-12-04\cr License: \tab GPL-3\cr }
 
 Online data collection tools like Google Forms often export
 multiple-response questions with data concatenated in cells. The
