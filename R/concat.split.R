@@ -37,18 +37,15 @@ concat.split.compact <- function(data, split.col, sep = ",",
                                  drop = FALSE, fixed = TRUE, ...) {
   message("This function is deprecated. Use `cSplit` instead.")
   cSplit(indt = data, splitCols = split.col, sep = sep, 
-         drop = drop, fixed = fixed, direction = "wide", ...)
+         direction = "wide", fixed = fixed, drop = drop, ...)
 }
 NULL
-
-
-
-
 
 #' Split Concatenated Values into their Corresponding Column Position
 #' 
 #' "Expand" concatenated numeric or character values to their relevant position
-#' in a \code{data.frame} or \code{data.table} or create a binary representation of such data.
+#' in a \code{data.frame} or \code{data.table} or create a binary or count 
+#' representation of such data.
 #' 
 #' 
 #' @param data The source \code{data.frame} or \code{data.table}.
@@ -57,8 +54,9 @@ NULL
 #' @param sep The character separating each value. Can also be a regular
 #' expression.
 #' @param mode Can be either \code{"binary"} (where presence of a number in a
-#' given column is converted to "1") or \code{"value"} (where the value is
-#' retained and not recoded to "1"). Defaults to \code{"binary"}.
+#' given column is converted to "1"), \code{"value"} (where the value is
+#' retained and not recoded to "1"), or \code{"count"} (where the values are
+#' tabulated). Defaults to \code{"binary"}.
 #' @param type Can be either \code{"numeric"} (where the items being split are
 #' integers) or \code{"character"} (where the items being split are character
 #' strings). Defaults to \code{"numeric"}.
@@ -77,14 +75,25 @@ NULL
 #' temp <- head(concat.test)
 #' cSplit_e(temp, "Likes")
 #' cSplit_e(temp, 4, ";", fill = 0)
+#' 
+#' mydf <- data.frame(v1 = 1:4, v2 = c("1,1,2,2,1,3,4", 
+#'    "1,2,3,4,6", "1,3", "1,6,6,4,2"))
+#' 
+#' cSplit_e(mydf, "v2", mode = "count")
+#' 
+#' ## Slightly different result when using type = "character"
+#' ## Notice that there is no "v2_5"
+#' cSplit_e(mydf, "v2", mode = "count", type = "character")
+#' 
+#' cSplit_e(mydf, "v2", mode = "binary")
+#' cSplit_e(mydf, "v2", mode = "value")
+#' 
 #'  
 #' ## The old function name still works
 #' concat.split.expanded(temp, "Likes")
 #' concat.split.expanded(temp, 4, ";", fill = 0)
 #' concat.split.expanded(temp, 4, ";", mode = "value", drop = TRUE)
 #' concat.split.expanded(temp, "Siblings", type = "character", drop = TRUE)
-#' 
-#' \dontshow{rm(temp)}
 #' 
 #' @aliases cSplit_e
 #' @aliases concat.split.expanded
@@ -100,8 +109,12 @@ cSplit_e <- concat.split.expanded <- function(data, split.col, sep = ",", mode =
   if (!is.character(data[[split.col]])) a <- as.character(data[[split.col]])
   else a <- data[[split.col]]
   if (is.null(mode)) mode = "binary"  
-  b <- strsplit(a, sep, fixed = fixed)
-  b <- lapply(b, trim)
+  b <- if (isTRUE(fixed)) {
+    stri_split_fixed(a, sep, omit_empty = TRUE)
+  } else {
+    stri_split_regex(a, sep, omit_empty = TRUE)
+  } 
+  b <- lapply(b, stri_trim_both)
   
   temp1 <- switch(
     type,
@@ -128,12 +141,6 @@ cSplit_e <- concat.split.expanded <- function(data, split.col, sep = ",", mode =
 }
 NULL
 
-
-
-
-
-
-
 #' Split Concatenated Cells into a List Format
 #' 
 #' Takes a column in a \code{data.frame} or \code{data.table} with multiple values, splits the
@@ -149,6 +156,7 @@ NULL
 #' \code{FALSE}.
 #' @param fixed Used for \code{\link{strsplit}} for allowing regular
 #' expressions to be used.
+#' @param numeric Logical. Should the split values in the list be converted to numeric? Defaults to \code{FALSE}.
 #' @return A \code{data.frame} or \code{data.table} with the concatenated column split and added as
 #' a \code{list}.
 #' @author Ananda Mahto
@@ -158,10 +166,11 @@ NULL
 #' 
 #' temp <- head(concat.test)
 #' str(cSplit_l(temp, "Likes"))
-#' cSplit_l(temp, 4, ";")
+#' cSplit_l(temp, 4, ";", numeric = TRUE)
+#' str(cSplit_l(temp, 4, ";", numeric = TRUE))
 #' 
 #' ## The old function name still works
-#' str(concat.split.list(temp, "Likes"))
+#' str(concat.split.list(temp, "Likes", numeric = TRUE))
 #' concat.split.list(temp, 4, ";")
 #' concat.split.list(temp, 4, ";", drop = TRUE)
 #' 
@@ -175,18 +184,22 @@ NULL
 #' @export concat.split.list
 #' @export cSplit_l
 cSplit_l <- concat.split.list <- function(data, split.col, sep = ",", 
-                              drop = FALSE, fixed = FALSE) {
+                              drop = FALSE, fixed = FALSE, numeric = FALSE) {
   if (is.numeric(split.col)) split.col <- Names(data, split.col)
-  a <- .stripWhite(data[[split.col]], sep)
-  
   varname <- paste(split.col, "list", sep="_")
-  b <- strsplit(a, sep, fixed = fixed)
-  
-  if (suppressWarnings(is.na(try(max(as.numeric(unlist(b))))))) {
-    data[[varname]] <- I(b)
-  } else if (!is.na(try(max(as.numeric(unlist(b)))))) {
-    data[[varname]] <- I(lapply(b, as.numeric))
+  b <- if (isTRUE(fixed)) {
+    stri_split_fixed(data[[split.col]], sep, omit_empty = TRUE)
+  } else {
+    stri_split_regex(data[[split.col]], sep, omit_empty = TRUE)
   }
+  b <- lapply(b, stri_trim_both)
+
+  if (isTRUE(numeric)) {
+    data[[varname]] <- I(lapply(b, as.numeric))
+  } else {
+    data[[varname]] <- I(b)
+  }
+  
   if (isTRUE(drop)) {
     if (is.data.table(data)) {
       data[, (split.col) := NULL][]
@@ -197,24 +210,6 @@ cSplit_l <- concat.split.list <- function(data, split.col, sep = ",",
   else data
 }
 NULL
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #' Split Concatenated Cells in a Dataset
 #' 
@@ -256,7 +251,7 @@ NULL
 #' \emph{regular expression}? See Details.
 #' @param fill The "fill" value for missing values when \code{structure =
 #' "expanded"}. Defaults to \code{NA}.
-#' @param \dots Additional arguments to \code{\link{cSplit}}.
+#' @param \dots Additional arguments to the relevant parent function.
 #' @note This is more of a "legacy" or "convenience" wrapper function
 #' encompassing the features available in the separated functions of
 #' \code{\link{cSplit}}, \code{\link{concat.split.compact}},
@@ -321,41 +316,23 @@ concat.split <- function(data, split.col, sep = ",", structure = "compact",
       if (!is.null(mode)) warning(M1)
       if (!is.null(type)) warning(M2)
       concat.split.compact(data = data, split.col = split.col, 
-                           sep = sep, drop = drop, fixed = fixed)
+                           sep = sep, drop = drop, fixed = fixed, ...)
     },
     list = {
       if (!is.null(mode)) warning(M1)
       if (!is.null(type)) warning(M2)
       concat.split.list(data = data, split.col = split.col, 
-                        sep = sep, drop = drop, fixed = fixed)
+                        sep = sep, drop = drop, fixed = fixed, ...)
     },
     expanded = {
       concat.split.expanded(data = data, split.col = split.col, 
                             sep = sep, mode = mode, type = type, 
-                            drop = drop, fixed = fixed, fill = fill)
+                            drop = drop, fixed = fixed, fill = fill, ...)
     },
     stop("'structure' must be either 'compact', 'expanded', or 'list'"))
   temp
 }
 NULL
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #' Split Concatenated Cells and Optionally Reshape the Output
 #' 

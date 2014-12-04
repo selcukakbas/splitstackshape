@@ -38,7 +38,7 @@ or not). Defaults to \code{FALSE}.}
 \item{fill}{The "fill" value for missing values when \code{structure =
 "expanded"}. Defaults to \code{NA}.}
 
-\item{\dots}{Additional arguments to \code{\link{cSplit}}.}
+\item{\dots}{Additional arguments to the relevant parent function.}
 }
 \description{
 The \code{concat.split} function takes a column with multiple values, splits

@@ -4,7 +4,8 @@
 \alias{concat.split.list}
 \title{Split Concatenated Cells into a List Format}
 \usage{
-cSplit_l(data, split.col, sep = ",", drop = FALSE, fixed = FALSE)
+cSplit_l(data, split.col, sep = ",", drop = FALSE, fixed = FALSE,
+  numeric = FALSE)
 }
 \arguments{
 \item{data}{The source \code{data.frame} or \code{data.table}.}
@@ -20,6 +21,8 @@ expression.}
 
 \item{fixed}{Used for \code{\link{strsplit}} for allowing regular
 expressions to be used.}
+
+\item{numeric}{Logical. Should the split values in the list be converted to numeric? Defaults to \code{FALSE}.}
 }
 \value{
 A \code{data.frame} or \code{data.table} with the concatenated column split and added as
@@ -32,10 +35,11 @@ values into a \code{list}, and returns a new \code{data.frame} or \code{data.tab
 \examples{
 temp <- head(concat.test)
 str(cSplit_l(temp, "Likes"))
-cSplit_l(temp, 4, ";")
+cSplit_l(temp, 4, ";", numeric = TRUE)
+str(cSplit_l(temp, 4, ";", numeric = TRUE))
 
 ## The old function name still works
-str(concat.split.list(temp, "Likes"))
+str(concat.split.list(temp, "Likes", numeric = TRUE))
 concat.split.list(temp, 4, ";")
 concat.split.list(temp, 4, ";", drop = TRUE)
 

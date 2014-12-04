@@ -29,7 +29,7 @@ getanID <- function(data, id.vars = NULL) {
   if (!is.data.table(data)) data <- as.data.table(data)
   else data <- copy(data)
   
-  if (is.numeric(id.vars)) id.vars <- names(data)[id.vars]
+  if (is.numeric(id.vars)) id.vars <- Names(data, id.vars)
   if (is.null(id.vars)) id.vars <- names(data)
   
   .id <- .N <- NULL

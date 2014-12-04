@@ -98,7 +98,7 @@ cSplit <- function(indt, splitCols, sep = ",", direction = "wide",
         temp1
       })
       out <- cbind(indt, do.call(cbind, X))
-      if (isTRUE(drop)) out[, (splitCols) := NULL][]
+      if (isTRUE(drop)) out[, (splitCols) := NULL][] else out
     },
     long = {
       Y <- lapply(seq_along(splitCols), function(x) {
@@ -121,7 +121,7 @@ cSplit <- function(indt, splitCols, sep = ",", direction = "wide",
       if (isTRUE(type.convert)) YDT <- YDT[, lapply(.SD, type.convert)]
       out <- cbind(expandRows(indt, Ncols, count.is.col = FALSE), YDT)
       if (!isTRUE(makeEqual)) out <- na.omit(out, by = paste0(splitCols, "_new"))
-      if (isTRUE(drop)) out[, (splitCols) := NULL][]
+      if (isTRUE(drop)) out[, (splitCols) := NULL][] else out
     })
 }
 NULL
