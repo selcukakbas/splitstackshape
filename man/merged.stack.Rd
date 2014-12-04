@@ -3,7 +3,8 @@
 \alias{merged.stack}
 \title{Take a List of Stacked data.tables and Merge Them}
 \usage{
-merged.stack(data, id.vars = NULL, var.stubs, sep, keep.all = TRUE, ...)
+merged.stack(data, id.vars = NULL, var.stubs, sep, keep.all = TRUE,
+  addVar = FALSE, ...)
 }
 \arguments{
 \item{data}{The input \code{data.frame}.}
@@ -20,6 +21,10 @@ in the source \code{data.frame}. Alternatively, can be set to
 \code{data.frame} be kept (\code{keep.all = TRUE}) or only those which
 comprise the \code{id.vars} and split data from the \code{var.stubs}
 (\code{keep.all = FALSE}).}
+
+\item{addVar}{Logical. Should the original variable names be added as a column
+alongside the stacked data, similar to \code{melt} from "reshape2". Defaults
+to \code{FALSE}.}
 
 \item{\dots}{Other arguments to be passed on to \code{\link{Stacked}} (for example, \code{keep.rownames} to retain the rownames of the input dataset, or \code{atStart}, in case \code{sep = "var.stubs"} is specified).}
 }
@@ -46,6 +51,14 @@ mydf <- data.frame(id_1 = 1:6, id_2 = c("A", "B"),
                    varC.3 = rnorm(6))
 mydf
 merged.stack(mydf, var.stubs = c("varA", "varB", "varC"), sep = ".")
+
+DT = data.table(x=1:5, a=6:10, b=11:15,
+  c=letters[1:5], d=letters[6:10],
+  e = c(TRUE, FALSE, TRUE, FALSE, TRUE))
+DT
+
+merged.stack(DT, var.stubs = c("a|b", "c|d", "e"),
+  sep = "var.stubs", addVar = TRUE)
 
 \dontshow{rm(mydf)}
 }

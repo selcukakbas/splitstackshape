@@ -4,7 +4,7 @@
 \title{Stack Columns from a Wide Form to a Long Form}
 \usage{
 Stacked(data, id.vars = NULL, var.stubs, sep, keep.all = TRUE,
-  keyed = TRUE, keep.rownames = FALSE, ...)
+  keyed = TRUE, keep.rownames = FALSE, addVar = FALSE, ...)
 }
 \arguments{
 \item{data}{The source \code{data.frame}.}
@@ -30,6 +30,10 @@ the \code{key} for the resulting \code{data.table}s. If \code{TRUE}
 variables that are created by \code{Stacked}.}
 
 \item{keep.rownames}{Logical. Should rownames be kept when converting the input to a \code{data.table}? Defaults to \code{FALSE}.}
+
+\item{addVar}{Logical. Should the original variable names be added as a column
+alongside the stacked data, similar to \code{melt} from "reshape2". Defaults
+to \code{FALSE}.}
 
 \item{\dots}{Other arguments to be passed on when \code{sep = "var.stubs"} (specifically, \code{atStart}: A logical argument to indicate whether the stubs come at the start or at the end of the variable names).}
 }

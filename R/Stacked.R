@@ -21,6 +21,9 @@
 #' (default) the \code{key} is set to the \code{id.vars} and the "time"
 #' variables that are created by \code{Stacked}.
 #' @param keep.rownames Logical. Should rownames be kept when converting the input to a \code{data.table}? Defaults to \code{FALSE}.
+#' @param addVar Logical. Should the original variable names be added as a column
+#' alongside the stacked data, similar to \code{melt} from "reshape2". Defaults 
+#' to \code{FALSE}.
 #' @param \dots Other arguments to be passed on when \code{sep = "var.stubs"} (specifically, \code{atStart}: A logical argument to indicate whether the stubs come at the start or at the end of the variable names).
 #' @return A \code{list} of \code{data.table}s with one \code{data.table} for
 #' each "var.stub". The \code{\link[data.table:key]{key}} is set to the
@@ -47,7 +50,7 @@
 #' @export Stacked
 Stacked <- function(data, id.vars = NULL, var.stubs, sep, 
                     keep.all = TRUE, keyed = TRUE, 
-                    keep.rownames = FALSE, ...) {
+                    keep.rownames = FALSE, addVar = FALSE, ...) {
   temp1 <- vGrep(var.stubs, names(data))
 
   s <- sort.list(sapply(names(temp1), nchar), decreasing = TRUE)
@@ -101,12 +104,28 @@ Stacked <- function(data, id.vars = NULL, var.stubs, sep,
       data[, c(id.vars, onames), with = FALSE],
       data[, list(.values = unlist(.SD, use.names=FALSE)), 
            .SDcols = temp1[[i]]])
+
+    if (isTRUE(addVar)) {
+      AV <- paste0("var", i)
+      ZZ[[i]][, (AV) := rep(Names(data, temp1[[i]]), each = nrow(data))]
+    }
+    
     setnames(ZZ[[i]], ".values", var.stubs[[i]])
+    
     setkeyv(ZZ[[i]], id.vars)
-    ZZ[[i]] <- cbind(ZZ[[i]], TimeCols[[i]])
+    
+    CHECK <- all(TimeCols[[i]] == "")
+    
+    ZZ[[i]] <- if (CHECK) ZZ[[i]] else cbind(ZZ[[i]], TimeCols[[i]])
     if (isTRUE(keyed)) {
-      setkeyv(ZZ[[i]], c(key(ZZ[[i]]), colnames(TimeCols[[i]])))
-      setcolorder(ZZ[[i]], c(key(ZZ[[i]]), var.stubs[[i]], onames))
+      keys <-  c(key(ZZ[[i]]), if (CHECK) NULL else colnames(TimeCols[[i]])) 
+      setkeyv(ZZ[[i]], keys)
+      if (!anyDuplicated(ZZ[[i]]) == 0) {
+        ZZ[[i]] <- getanID(ZZ[[i]], keys)
+        setkeyv(ZZ[[i]], c(keys, ".id"))
+      } 
+      setcolorder(ZZ[[i]], c(key(ZZ[[i]]), if (isTRUE(addVar)) AV else NULL, 
+                             var.stubs[[i]], onames))
     } 
   }
 
@@ -114,19 +133,6 @@ Stacked <- function(data, id.vars = NULL, var.stubs, sep,
   else ZZ[]
 }
 NULL
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #' Take a List of Stacked data.tables and Merge Them
@@ -146,6 +152,9 @@ NULL
 #' \code{data.frame} be kept (\code{keep.all = TRUE}) or only those which
 #' comprise the \code{id.vars} and split data from the \code{var.stubs}
 #' (\code{keep.all = FALSE}).
+#' @param addVar Logical. Should the original variable names be added as a column
+#' alongside the stacked data, similar to \code{melt} from "reshape2". Defaults 
+#' to \code{FALSE}.
 #' @param \dots Other arguments to be passed on to \code{\link{Stacked}} (for example, \code{keep.rownames} to retain the rownames of the input dataset, or \code{atStart}, in case \code{sep = "var.stubs"} is specified).
 #' @return A merged \code{data.table}.
 #' @note The \code{keyed} argument to \code{\link{Stacked}} has been hard-
@@ -165,12 +174,21 @@ NULL
 #' mydf
 #' merged.stack(mydf, var.stubs = c("varA", "varB", "varC"), sep = ".")
 #' 
+#' DT = data.table(x=1:5, a=6:10, b=11:15, 
+#'   c=letters[1:5], d=letters[6:10], 
+#'   e = c(TRUE, FALSE, TRUE, FALSE, TRUE))
+#' DT
+#' 
+#' merged.stack(DT, var.stubs = c("a|b", "c|d", "e"), 
+#'   sep = "var.stubs", addVar = TRUE)
+#' 
 #' \dontshow{rm(mydf)}
 #' 
 #' @export merged.stack
-merged.stack <- function(data, id.vars = NULL, var.stubs, sep, keep.all = TRUE, ...) {
+merged.stack <- function(data, id.vars = NULL, var.stubs, sep, 
+                         keep.all = TRUE, addVar = FALSE, ...) {
   temp <- Stacked(data = data, id.vars = id.vars, var.stubs = var.stubs, 
-                  sep = sep, keep.all = keep.all, keyed = TRUE, ...)
+                  sep = sep, keep.all = keep.all, addVar = addVar, keyed = TRUE, ...)
   if (!is.null(dim(temp))) temp
   else Reduce(function(x, y) merge(x, y, all = TRUE), temp)
 }
