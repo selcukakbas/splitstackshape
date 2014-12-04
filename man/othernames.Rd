@@ -19,7 +19,7 @@ A convenience function for \code{setdiff(names(data),
 }
 \examples{
 mydf <- data.frame(a = 1:2, b = 3:4, c = 5:6)
-splitstackshape:::othernames(mydf, "a")
+othernames(mydf, "a")
 
 \dontshow{rm(mydf)}
 }

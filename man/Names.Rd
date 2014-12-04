@@ -19,8 +19,8 @@ specify a subset of \code{names} of a \code{data.frame}.
 }
 \examples{
 mydf <- data.frame(a = 1:2, b = 3:4, c = 5:6)
-splitstackshape:::Names(mydf, c("a", "c"))
-splitstackshape:::Names(mydf, c(1, 3))
+Names(mydf, c("a", "c"))
+Names(mydf, c(1, 3))
 
 \dontshow{rm(mydf)}
 }
